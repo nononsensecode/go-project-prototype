@@ -6,15 +6,18 @@ import (
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	config "nononsensecode.com/my_project/config"
+	config "nononsensecode.com/my_project/internal/config"
 	greetings "nononsensecode.com/my_project/pkg/greetings"
 )
 
 func main() {
 	var cfg config.HelloConfig
-	err := cleanenv.ReadConfig("../../config/config.yaml", &cfg)
-	if err != nil {
-		panic("Configuration not found")
+
+	args := ProcessArgs(&cfg)
+
+	if err := cleanenv.ReadConfig(args.ConfigPath, &cfg); err != nil {
+		fmt.Println(err)
+		os.Exit(2)
 	}
 
 	fmt.Printf("%s\n", greetings.Hello(cfg.Hello.Name))
@@ -24,7 +27,7 @@ func main() {
 func ProcessArgs(cfg interface{}) config.Args {
 	var a config.Args
 
-	f := flag.NewFlagSet("Example server", 1)
+	f := flag.NewFlagSet("Hello", 1)
 	f.StringVar(&a.ConfigPath, "c", "config.yaml", "Path to configuration file")
 
 	fu := f.Usage
@@ -32,7 +35,7 @@ func ProcessArgs(cfg interface{}) config.Args {
 		fu()
 		envHelp, _ := cleanenv.GetDescription(cfg, nil)
 		fmt.Fprintln(f.Output())
-		fmt.Fprint(f.Output(), envHelp)
+		fmt.Fprintln(f.Output(), envHelp)
 	}
 
 	f.Parse(os.Args[1:])
